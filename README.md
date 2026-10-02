@@ -1,2 +1,11 @@
-# projetos.a.r.a
-Marden Martins, Raiane Reis, Lucas Cavalcante, Henrique Paixão, Walisson Araújo
+Membros:
+
+Marden Martins 
+Bruno Amaro 
+Raiane Reis 
+Henrique Paixão 
+Walison Araújo 
+Tiago de Deus 
+Fernando Ferreira 
+Lucas Cavalcante
+Isamel

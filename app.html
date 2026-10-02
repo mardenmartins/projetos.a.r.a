@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel — S.A.R.A</title>
+<link rel="stylesheet" href="style.css">
+<!-- QR Code scanner (leitura via câmera) -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- QR Code generator (geração de imagem QR) -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<style>
+/* ───────── Layout geral ───────── */
+.page-wrap {
+  padding-top: 64px; /* altura da navbar */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+  padding: 48px 40px 64px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ───────── Stats bar ───────── */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color .25s;
+}
+.stat-card:hover { border-color: var(--border-strong); }
+.stat-num {
+  font-family: 'Syne', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.stat-card.fraude .stat-num { color: var(--warn); }
+.stat-card.ok     .stat-num { color: var(--accent); }
+
+/* ───────── Seção com título ───────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.section-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  flex-shrink: 0;
+}
+.section-icon svg { width: 18px; height: 18px; color: var(--accent); }
+.section-title { font-size: 18px; font-weight: 700; }
+.section-sub   { font-size: 13px; color: var(--muted); }
+
+/* ───────── Grid 2 colunas ───────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin-bottom: 24px; }
+
+/* ───────── Gerador de QR ───────── */
+.qr-generator { margin-bottom: 24px; }
+
+.gen-result {
+  display: none;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 20px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+.gen-result.show { display: flex; }
+
+.qr-img-wrap {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  flex-shrink: 0;
+  width: 130px; height: 130px;
+  display: flex; align-items: center; justify-content: center;
+}
+#qr-canvas { width: 106px; height: 106px; }
+
+.gen-info { flex: 1; min-width: 0; }
+.gen-info .prod-nome {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.gen-meta { display: flex; flex-direction: column; gap: 6px; }
+.gen-meta-row {
+  display: flex;
+  gap: 8px;
+  font-size: 13px;
+}
+.gen-meta-row .key { color: var(--muted); min-width: 90px; }
+.gen-meta-row .val { color: var(--text); font-family: var(--mono); font-size: 12px; word-break: break-all; }
+.gen-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.status-registrado {
+  background: rgba(100,160,255,0.12);
+  border: 1px solid rgba(100,160,255,0.25);
+  color: var(--info);
+}
+.status-vendido {
+  background: rgba(0,229,160,0.1);
+  border: 1px solid rgba(0,229,160,0.25);
+  color: var(--accent);
+}
+.status-fraude {
+  background: rgba(255,68,68,0.1);
+  border: 1px solid rgba(255,68,68,0.25);
+  color: var(--warn);
+}
+
+/* ───────── Scanner de câmera ───────── */
+.scanner-wrap {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+}
+#reader {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+#reader video { border-radius: 8px; }
+
+.scan-toggle-btns { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.mode-btn {
+  padding: 9px 20px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  transition: all .2s;
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.mode-btn.active {
+  background: var(--accent);
+  color: #04140e;
+  border-color: var(--accent);
+}
+
+#mode-camera { display: block; }
+#mode-digitar { display: none; }
+
+.scan-input-row { display: flex; gap: 10px; }
+.scan-input-row .field-input { flex: 1; font-family: var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* ───────── Resultado da verificação ───────── */
+.result-wrap {
+  display: none;
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  border: 1px solid var(--border);
+  margin-top: 20px;
+  animation: slideIn .35s ease;
+}
+.result-wrap.show { display: block; }
+.result-wrap.original  { border-color: rgba(0,229,160,.3);  background: rgba(0,229,160,.05); }
+.result-wrap.nao_vendido { border-color: rgba(100,160,255,.3); background: rgba(100,160,255,.05); }
+.result-wrap.nao_encontrado { border-color: rgba(255,68,68,.3);  background: rgba(255,68,68,.05); }
+.result-wrap.fraude    { border-color: rgba(255,68,68,.45); background: rgba(255,68,68,.08); }
+
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0);    }
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.result-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.result-icon.ok   { background: rgba(0,229,160,.15); }
+.result-icon.warn { background: rgba(255,68,68,.15); }
+.result-icon.info { background: rgba(100,160,255,.15); }
+
+.result-titulo { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+.result-msg    { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.result-field { display: flex; flex-direction: column; gap: 2px; }
+.result-field .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.result-field .v { font-size: 14px; font-weight: 500; }
+.result-code { font-family: var(--mono); font-size: 12px; color: var(--accent); background: rgba(0,229,160,.08); padding: 2px 8px; border-radius: 4px; display: inline-block; }
+
+/* ───────── Lista de produtos ───────── */
+.prod-list { display: flex; flex-direction: column; gap: 10px; }
+.prod-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  transition: border-color .2s;
+}
+.prod-row:hover { border-color: var(--border-strong); }
+.prod-cat {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.prod-info { flex: 1; min-width: 0; }
+.prod-nome-row { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prod-sub-row  { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.prod-status { flex-shrink: 0; }
+.prod-verify-btn {
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.prod-verify-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.empty-state .big { font-size: 36px; margin-bottom: 8px; }
+
+/* ───────── Logs ───────── */
+.log-list { display: flex; flex-direction: column; gap: 8px; }
+.log-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  padding: 10px 16px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.log-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.log-dot.original       { background: var(--accent); }
+.log-dot.fraude         { background: var(--warn); }
+.log-dot.nao_vendido    { background: var(--info); }
+.log-dot.nao_encontrado { background: var(--muted); }
+.log-code { font-family: var(--mono); font-size: 12px; color: var(--accent); min-width: 180px; }
+.log-res   { color: var(--muted); flex: 1; }
+.log-hora  { color: var(--muted); font-size: 11px; font-family: var(--mono); }
+
+/* ───────── Tabs de navegação interna ───────── */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 40px 0;
+}
+
+/* ───────── Responsivo ───────── */
+@media (max-width: 900px) {
+  .stats-bar  { grid-template-columns: repeat(2,1fr); }
+  .two-col    { grid-template-columns: 1fr; }
+  .three-col  { grid-template-columns: 1fr; }
+  .result-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  main { padding: 28px 16px 48px; }
+  .stats-bar { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-num  { font-size: 22px; }
+  .gen-result { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav>
+  <div class="nav-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <rect x="3" y="3" width="7" height="7" rx="1.2"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.2"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.2"/>
+      <path d="M14 14h3v3h-3zM20 14v3M17 20h3"/>
+    </svg>
+    <span>S.A.R.A <span style="color:var(--muted);font-weight:400;font-size:14px">/ Painel</span></span>
+  </div>
+  <div class="nav-user">
+    <div class="avatar" id="nav-avatar">A</div>
+    <span id="nav-nome">admin</span>
+    <button class="nav-logout" onclick="fazerLogout()">Sair</button>
+  </div>
+</nav>
+
+<!-- ── Conteúdo principal ── -->
+<div class="page-wrap">
+<main>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card ok">
+      <span class="stat-num" id="s-total">0</span>
+      <span class="stat-label">Produtos registrados</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="s-vendidos">0</span>
+      <span class="stat-label">Vendidos / ativados</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-num" id="s-verificacoes">0</span>
+      <span class="stat-label">Verificações feitas</span>
+    </div>
+    <div class="stat-card fraude">
+      <span class="stat-num" id="s-fraudes">0</span>
+      <span class="stat-label">Alertas de fraude</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       BLOCO 1 — GERAR PRODUTO (QR)
+  ══════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M12 5v14M5 12h14"/>
+      </svg>
+    </div>
+    <div>
+      <div class="section-title">Registrar novo produto</div>
+      <div class="section-sub">Gera um QR Code único — simula o "nascimento" na fábrica</div>
+    </div>
+  </div>
+
+  <div class="qr-generator card">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:4px">
+      <button class="btn btn-primary" id="btn-gerar" onclick="gerarProduto()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Gerar produto aleatório
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="marcarComoVendido()" id="btn-vender" style="display:none">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Simular venda no PDV
+      </button>
+    </div>
+
+    <!-- Resultado do produto gerado -->
+    <div class="gen-result" id="gen-result">
+      <div class="qr-img-wrap">
+        <div id="qr-canvas"></div>
+      </div>
+      <div class="gen-info">
+        <div class="prod-nome" id="gen-nome">—</div>
+        <div class="gen-meta">
+          <div class="gen-meta-row">
+            <span class="key">Código QR</span>
+            <span class="val" id="gen-codigo">—</span>
+          </div>
+          <div class="gen-meta-row">
+            <span class="key">Marca</span>
+            <span class="val" id="gen-marca">—</span>
+          </div>
+          <div class="gen-meta-row">
+            <span class="key">Lote</span>
+            <span class="val" id="gen-lote">—</span>
+          </div>
+          <div class="gen-meta-row">
+            <span class="key">Origem</span>
+            <span class="val" id="gen-origem">—</span>
+          </div>
+          <div class="gen-meta-row">
+            <span class="key">Status</span>
+            <span class="val" id="gen-status">—</span>
+          </div>
+        </div>
+        <div class="gen-actions">
+          <button class="btn btn-outline btn-sm" onclick="copiarCodigo()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copiar código
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="verificarCodigoAtual()">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Verificar este produto
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- ══════════════════════════════
+       BLOCO 2 — VERIFICAR QR CODE
+  ══════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M9 11l3 3L22 4"/>
+        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+    </div>
+    <div>
+      <div class="section-title">Verificar autenticidade</div>
+      <div class="section-sub">Leia o QR Code pela câmera ou digite o código manualmente</div>
+    </div>
+  </div>
+
+  <div class="scanner-wrap">
+    <!-- Toggle câmera / digitação -->
+    <div class="scan-toggle-btns">
+      <button class="mode-btn active" id="tab-camera" onclick="setModo('camera')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Câmera (QR Code)
+      </button>
+      <button class="mode-btn" id="tab-digitar" onclick="setModo('digitar')">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M8 10h.01M12 10h.01M16 10h.01M8 14h8"/></svg>
+        Digitar código
+      </button>
+    </div>
+
+    <!-- Modo câmera -->
+    <div id="mode-camera">
+      <div id="reader"></div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn btn-primary btn-sm" id="btn-iniciar-scan" onclick="iniciarScanner()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Iniciar câmera
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-parar-scan" onclick="pararScanner()" style="display:none">Parar câmera</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">
+        Aponte a câmera para o QR Code gerado acima. O sistema identifica automaticamente.
+      </p>
+    </div>
+
+    <!-- Modo digitação -->
+    <div id="mode-digitar">
+      <div class="scan-input-row">
+        <input
+          class="field-input mono"
+          id="input-codigo"
+          placeholder="Ex: SARA-2026-1234-ABCD"
+          onkeydown="if(event.key==='Enter') verificarManual()"
+        >
+        <button class="btn btn-primary" onclick="verificarManual()">Verificar</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:10px">
+        Pressione Enter ou clique em Verificar. Dica: copie o código do produto gerado acima.
+      </p>
+    </div>
+
+    <!-- Resultado da verificação -->
+    <div class="result-wrap" id="result-wrap">
+      <div class="result-header">
+        <div class="result-icon" id="result-icon"></div>
+        <div>
+          <div class="result-titulo" id="result-titulo">—</div>
+          <div class="result-msg"   id="result-msg">—</div>
+        </div>
+      </div>
+      <div class="result-grid" id="result-grid"></div>
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- ══════════════════════════════
+       BLOCO 3 — LISTA DE PRODUTOS
+  ══════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M20 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+      </svg>
+    </div>
+    <div>
+      <div class="section-title">Produtos registrados</div>
+      <div class="section-sub">Todos os itens cadastrados no banco de dados S.A.R.A</div>
+    </div>
+  </div>
+
+  <div class="prod-list" id="prod-list">
+    <div class="empty-state">
+      <div class="big">📦</div>
+      Nenhum produto ainda. Clique em "Gerar produto aleatório" para começar.
+    </div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- ══════════════════════════════
+       BLOCO 4 — HISTÓRICO DE LOGS
+  ══════════════════════════════ -->
+  <div class="section-header">
+    <div class="section-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+    </div>
+    <div>
+      <div class="section-title">Histórico de verificações</div>
+      <div class="section-sub">Log de todos os scans realizados nesta sessão</div>
+    </div>
+  </div>
+
+  <div class="log-list" id="log-list">
+    <div class="empty-state">
+      <div class="big">📋</div>
+      Nenhuma verificação registrada ainda.
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <strong>S.A.R.A</strong> — Sistema Automático de Reconhecimento de Autenticidade
+  &nbsp;·&nbsp; Dados armazenados localmente neste navegador
+</footer>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script src="db.js"></script>
+<script>
+/* ── Guarda no estado da página ── */
+let produtoAtual = null;
+let scannerAtivo = false;
+let html5QrCode  = null;
+
+/* ── Inicialização ── */
+exigirLogin();
+
+window.addEventListener('DOMContentLoaded', () => {
+  const sessao = sessaoAtual();
+  if (sessao) {
+    document.getElementById('nav-nome').textContent = sessao.usuario;
+    document.getElementById('nav-avatar').textContent = sessao.usuario[0].toUpperCase();
+  }
+  atualizarTudo();
+});
+
+function atualizarTudo() {
+  atualizarStats();
+  renderizarProdutos();
+  renderizarLogs();
+}
+
+/* ── Logout ── */
+function fazerLogout() {
+  pararScanner();
+  logout();
+  window.location.href = 'login.html';
+}
+
+/* ── Stats ── */
+function atualizarStats() {
+  const s = estatisticas();
+  document.getElementById('s-total').textContent        = s.totalProdutos;
+  document.getElementById('s-vendidos').textContent     = s.totalVendidos;
+  document.getElementById('s-verificacoes').textContent = s.totalVerificacoes;
+  document.getElementById('s-fraudes').textContent      = s.totalFraudes;
+}
+
+/* ═══════════════════════════════════════════════
+   GERAR PRODUTO
+════════════════════════════════════════════════ */
+function gerarProduto() {
+  produtoAtual = registrarNovoProduto();
+  renderizarQR(produtoAtual.qrcode);
+  renderizarInfoGerador(produtoAtual);
+  document.getElementById('gen-result').classList.add('show');
+  document.getElementById('btn-vender').style.display = 'inline-flex';
+  atualizarTudo();
+}
+
+function renderizarQR(codigo) {
+  const container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: codigo,
+    width: 106,
+    height: 106,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+}
+
+function renderizarInfoGerador(p) {
+  document.getElementById('gen-nome').textContent   = p.nome;
+  document.getElementById('gen-codigo').textContent = p.qrcode;
+  document.getElementById('gen-marca').textContent  = p.marca;
+  document.getElementById('gen-lote').textContent   = p.lote;
+  document.getElementById('gen-origem').textContent = p.origem;
+  document.getElementById('gen-status').innerHTML   = p.vendido
+    ? '<span class="status-pill status-vendido">✓ Vendido</span>'
+    : '<span class="status-pill status-registrado">◉ Registrado</span>';
+}
+
+function marcarComoVendido() {
+  if (!produtoAtual) return;
+  const atualizado = registrarVenda(produtoAtual.qrcode);
+  if (atualizado) {
+    produtoAtual = atualizado;
+    renderizarInfoGerador(atualizado);
+    atualizarTudo();
+  }
+}
+
+function copiarCodigo() {
+  if (!produtoAtual) return;
+  navigator.clipboard.writeText(produtoAtual.qrcode).then(() => {
+    const btn = event.target.closest('button');
+    const original = btn.innerHTML;
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => { btn.innerHTML = original; }, 1800);
+  });
+}
+
+function verificarCodigoAtual() {
+  if (!produtoAtual) return;
+  document.getElementById('input-codigo').value = produtoAtual.qrcode;
+  setModo('digitar');
+  verificarManual();
+  document.getElementById('result-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ═══════════════════════════════════════════════
+   SCANNER DE CÂMERA
+════════════════════════════════════════════════ */
+function setModo(modo) {
+  pararScanner();
+  document.getElementById('mode-camera').style.display  = modo === 'camera'  ? 'block' : 'none';
+  document.getElementById('mode-digitar').style.display = modo === 'digitar' ? 'block' : 'none';
+  document.getElementById('tab-camera').classList.toggle('active', modo === 'camera');
+  document.getElementById('tab-digitar').classList.toggle('active', modo === 'digitar');
+  document.getElementById('result-wrap').classList.remove('show');
+}
+
+function iniciarScanner() {
+  if (scannerAtivo) return;
+  html5QrCode = new Html5Qrcode('reader');
+  const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+  html5QrCode.start(
+    { facingMode: 'environment' }, // câmera traseira no celular, webcam no PC
+    config,
+    (codigoDecodificado) => {
+      pararScanner();
+      processarResultado(verificarCodigo(codigoDecodificado));
+    },
+    () => {} // silencia erros de frame sem QR Code
+  ).then(() => {
+    scannerAtivo = true;
+    document.getElementById('btn-iniciar-scan').style.display = 'none';
+    document.getElementById('btn-parar-scan').style.display   = 'inline-flex';
+  }).catch((err) => {
+    alert('Não foi possível acessar a câmera. Verifique as permissões do navegador.\n\n' + err);
+  });
+}
+
+function pararScanner() {
+  if (html5QrCode && scannerAtivo) {
+    html5QrCode.stop().catch(() => {});
+    scannerAtivo = false;
+    document.getElementById('btn-iniciar-scan').style.display = 'inline-flex';
+    document.getElementById('btn-parar-scan').style.display   = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   VERIFICAÇÃO MANUAL (digitação)
+════════════════════════════════════════════════ */
+function verificarManual() {
+  const codigo = document.getElementById('input-codigo').value;
+  const resultado = verificarCodigo(codigo);
+  processarResultado(resultado);
+  atualizarTudo();
+}
+
+/* ═══════════════════════════════════════════════
+   EXIBIÇÃO DO RESULTADO
+════════════════════════════════════════════════ */
+function processarResultado(r) {
+  atualizarTudo();
+  const wrap  = document.getElementById('result-wrap');
+  const icon  = document.getElementById('result-icon');
+  const titulo = document.getElementById('result-titulo');
+  const msg   = document.getElementById('result-msg');
+  const grid  = document.getElementById('result-grid');
+
+  // Limpa classes anteriores
+  wrap.className = 'result-wrap show';
+  wrap.classList.add(r.resultado);
+
+  const configs = {
+    original: {
+      emoji: '✅', iconClass: 'ok',
+      titulo: 'Produto Autêntico',
+    },
+    nao_vendido: {
+      emoji: 'ℹ️', iconClass: 'info',
+      titulo: 'Produto Registrado (não vendido ainda)',
+    },
+    nao_encontrado: {
+      emoji: '❌', iconClass: 'warn',
+      titulo: 'Código Não Encontrado',
+    },
+    fraude: {
+      emoji: '⚠️', iconClass: 'warn',
+      titulo: 'ALERTA — Possível Fraude Detectada',
+    },
+    erro: {
+      emoji: '❓', iconClass: 'warn',
+      titulo: 'Erro na verificação',
+    },
+  };
+
+  const cfg = configs[r.resultado] || configs.erro;
+  icon.textContent = cfg.emoji;
+  icon.className   = `result-icon ${cfg.iconClass}`;
+  titulo.textContent = cfg.titulo;
+  msg.textContent    = r.mensagem;
+
+  // Monta campos extras se houver produto
+  grid.innerHTML = '';
+  if (r.produto) {
+    const p = r.produto;
+    const campos = [
+      { k: 'Produto',    v: p.nome },
+      { k: 'Marca',      v: p.marca },
+      { k: 'Categoria',  v: p.categoria },
+      { k: 'Lote',       v: p.lote },
+      { k: 'Fabricação', v: formatarData(p.dataFabricacao) },
+      { k: 'Origem',     v: p.origem },
+    ];
+    if (p.vendido) {
+      campos.push({ k: 'Data da venda', v: formatarData(p.dataVenda) });
+      campos.push({ k: 'Local da venda', v: p.localVenda });
+    }
+    campos.push({ k: 'Código QR', v: `<span class="result-code">${p.qrcode}</span>` });
+
+    campos.forEach(c => {
+      grid.innerHTML += `<div class="result-field"><span class="k">${c.k}</span><span class="v">${c.v}</span></div>`;
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   RENDERIZAÇÃO DE LISTA DE PRODUTOS
+════════════════════════════════════════════════ */
+const EMOJI_CATEGORIA = {
+  'Perfumes': '🌸', 'Medicamentos': '💊', 'Luxo': '💎',
+  'Eletrônicos': '📱', 'Bebidas': '🍷', 'Cosméticos': '💄', 'Autopeças': '⚙️',
+};
+
+function renderizarProdutos() {
+  const lista   = listarProdutos();
+  const el      = document.getElementById('prod-list');
+
+  if (!lista.length) {
+    el.innerHTML = `<div class="empty-state"><div class="big">📦</div>Nenhum produto ainda. Clique em "Gerar produto aleatório" para começar.</div>`;
+    return;
+  }
+
+  el.innerHTML = lista.slice(0, 20).map(p => `
+    <div class="prod-row">
+      <div class="prod-cat">${EMOJI_CATEGORIA[p.categoria] || '📦'}</div>
+      <div class="prod-info">
+        <div class="prod-nome-row">${p.nome}</div>
+        <div class="prod-sub-row">${p.qrcode} · ${p.marca}</div>
+      </div>
+      <div class="prod-status">
+        ${p.vendido
+          ? '<span class="status-pill status-vendido">✓ Vendido</span>'
+          : '<span class="status-pill status-registrado">◉ Registrado</span>'}
+      </div>
+      <button class="prod-verify-btn" onclick="verificarRapido('${p.qrcode}')">Verificar</button>
+    </div>
+  `).join('');
+}
+
+function verificarRapido(codigo) {
+  document.getElementById('input-codigo').value = codigo;
+  setModo('digitar');
+  verificarManual();
+  document.querySelector('.scanner-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ═══════════════════════════════════════════════
+   RENDERIZAÇÃO DE LOGS
+════════════════════════════════════════════════ */
+const RESULTADO_LABEL = {
+  original:       'Original autenticado',
+  fraude:         'Alerta de fraude',
+  nao_vendido:    'Registrado, não vendido',
+  nao_encontrado: 'Código não encontrado',
+};
+
+function renderizarLogs() {
+  const logs = listarLogs();
+  const el   = document.getElementById('log-list');
+
+  if (!logs.length) {
+    el.innerHTML = `<div class="empty-state"><div class="big">📋</div>Nenhuma verificação registrada ainda.</div>`;
+    return;
+  }
+
+  el.innerHTML = logs.slice(0, 30).map(l => `
+    <div class="log-row">
+      <span class="log-dot ${l.resultado}"></span>
+      <span class="log-code">${l.qrcode}</span>
+      <span class="log-res">${RESULTADO_LABEL[l.resultado] || l.resultado}</span>
+      <span class="log-hora">${formatarDataHora(l.dataHora)}</span>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITÁRIOS
+════════════════════════════════════════════════ */
+function formatarData(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function formatarDataHora(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+}
+</script>
+
+</body>
+</html>

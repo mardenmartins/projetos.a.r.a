@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrar — S.A.R.A</title>
+<link rel="stylesheet" href="style.css">
+<style>
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.login-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  max-width: 920px;
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6);
+}
+
+/* ── Painel esquerdo: identidade visual ── */
+.login-aside {
+  background:
+    radial-gradient(ellipse 90% 70% at 30% 20%, rgba(0,229,160,0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 60% at 90% 90%, rgba(0,102,255,0.14) 0%, transparent 60%),
+    var(--bg3);
+  padding: 48px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+
+.login-mark {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,229,160,0.3);
+  background: rgba(0,229,160,0.08);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 32px;
+}
+.login-mark svg { width: 26px; height: 26px; color: var(--accent); }
+
+.login-aside h1 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+.login-aside h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+.login-aside p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.75;
+  max-width: 320px;
+}
+
+.login-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 36px;
+}
+.login-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.login-flow-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.login-foot {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Painel direito: formulário ── */
+.login-form-panel {
+  padding: 56px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-form-panel .eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.login-form-panel h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.login-form-panel .sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+form { display: flex; flex-direction: column; gap: 18px; }
+
+.field-input-wrap { position: relative; }
+.field-input-wrap svg {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.field-input-wrap .field-input { padding-left: 40px; }
+
+.login-hint {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.6;
+}
+.login-hint .mono { color: var(--accent); font-family: var(--mono); }
+
+.login-submit { margin-top: 6px; }
+
+@media (max-width: 760px) {
+  .login-grid { grid-template-columns: 1fr; }
+  .login-aside { display: none; }
+  .login-form-panel { padding: 40px 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <div class="login-grid fade-up">
+
+    <!-- Painel de identidade -->
+    <div class="login-aside">
+      <div>
+        <div class="login-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+            <rect x="3" y="3" width="7" height="7" rx="1.2"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.2"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.2"/>
+            <path d="M14 14h3v3h-3zM20 14v3M17 20h3"/>
+          </svg>
+        </div>
+        <h1><em>S.A.R.A</em><br>Painel de Autenticidade</h1>
+        <p>Sistema Automático de Reconhecimento de Autenticidade. Acesse para registrar produtos e verificar QR Codes em tempo real.</p>
+
+        <div class="login-flow">
+          <div class="login-flow-item"><span class="login-flow-dot"></span> Registro do produto na fábrica</div>
+          <div class="login-flow-item"><span class="login-flow-dot"></span> Venda registrada no PDV</div>
+          <div class="login-flow-item"><span class="login-flow-dot"></span> Verificação via QR Code pelo consumidor</div>
+        </div>
+      </div>
+
+      <div class="login-foot">
+        <span class="badge" style="font-size:10px;padding:4px 10px">Demo local</span>
+        dados salvos apenas neste navegador
+      </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="login-form-panel">
+      <div class="eyebrow">Acesso restrito</div>
+      <h2>Entrar no sistema</h2>
+      <p class="sub">Use as credenciais de demonstração para acessar o painel.</p>
+
+      <form id="form-login" autocomplete="off">
+        <div class="field">
+          <label class="field-label" for="usuario">Usuário</label>
+          <div class="field-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input class="field-input" type="text" id="usuario" placeholder="admin" autocomplete="username">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="senha">Senha</label>
+          <div class="field-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            <input class="field-input" type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+          </div>
+        </div>
+
+        <div class="field-error" id="erro-login"></div>
+
+        <button type="submit" class="btn btn-primary btn-block login-submit">
+          Entrar
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+
+        <div class="login-hint">
+          <span>🔑</span>
+          <span>Credenciais de demonstração — usuário <span class="mono">admin</span> · senha <span class="mono">admin123</span></span>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+// Se já existe sessão ativa, vai direto para o painel
+if (sessaoAtual()) {
+  window.location.href = 'app.html';
+}
+
+document.getElementById('form-login').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const usuario = document.getElementById('usuario').value;
+  const senha   = document.getElementById('senha').value;
+  const erroEl  = document.getElementById('erro-login');
+
+  if (autenticar(usuario, senha)) {
+    erroEl.textContent = '';
+    window.location.href = 'app.html';
+  } else {
+    erroEl.textContent = 'Usuário ou senha incorretos. Tente admin / admin123.';
+  }
+});
+
+requestAnimationFrame(() => {
+  document.querySelector('.login-grid').classList.add('visible');
+});
+</script>
+</body>
+</html>
