@@ -234,7 +234,7 @@ form { display: flex; flex-direction: column; gap: 18px; }
 <script>
 // Se já existe sessão ativa, vai direto para o painel
 if (sessaoAtual()) {
-  window.location.href = 'app.html';
+  window.location.href = 'index.html';
 }
 
 document.getElementById('form-login').addEventListener('submit', function (e) {
@@ -245,7 +245,7 @@ document.getElementById('form-login').addEventListener('submit', function (e) {
 
   if (autenticar(usuario, senha)) {
     erroEl.textContent = '';
-    window.location.href = 'app.html';
+    window.location.href = 'index.html';
   } else {
     erroEl.textContent = 'Usuário ou senha incorretos. Tente admin / admin123.';
   }
